@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B2B Plan">
+<meta name="theme-color" content="#0d0f12">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Bridge to Brisbane Plan</title>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --card: #1c2128;
+    --card-soft: #252b33;
+    --text: #f2f4f7;
+    --muted: #9aa3ad;
+    --accent: #ff7a18;
+    --accent2: #e8420e;
+    --easy: #4fc3f7;
+    --long: #81c784;
+    --intervals: #ff7a18;
+    --tempo: #ce93d8;
+    --rest: #78909c;
+    --done: #4caf50;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) 14px calc(86px + env(safe-area-inset-bottom));
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* ---- Views (Home / Plan) ---- */
+  body.view-home .week:not(.current),
+  body.view-home .past-toggle,
+  body.view-home #past-weeks,
+  body.view-home .placeholder,
+  body.view-home footer { display: none; }
+  body.view-plan .hero,
+  body.view-plan .chart-card { display: none; }
+
+  .tabbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(13, 15, 18, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #2a313a;
+    z-index: 50;
+  }
+  .tabbar button {
+    flex: 1;
+    max-width: 200px;
+    background: var(--card);
+    border: 1px solid #2a313a;
+    border-radius: 99px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 11px 0;
+    cursor: pointer;
+  }
+  .tabbar button.active {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    color: #000;
+  }
+  header {
+    text-align: center;
+    padding: 24px 0 14px;
+  }
+  header h1 {
+    font-size: 1.45rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .countdown {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .countdown strong { color: var(--text); font-size: 1.05rem; }
+
+  /* ---- Hero (next up) ---- */
+  .hero {
+    background: linear-gradient(135deg, #2a1c10, #1c2128 55%);
+    border: 1px solid #3a2a18;
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .hero .eyebrow {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .hero-run { display: flex; align-items: center; gap: 12px; }
+  .hero-title { font-size: 1.15rem; font-weight: 700; }
+  .hero-meta { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
+  .hero.race-day {
+    background: linear-gradient(135deg, #3a2a00, #2a1c10);
+    border-color: #ffd54f;
+  }
+  .hero .go-hint { color: var(--muted); font-size: 0.72rem; margin-top: 10px; }
+
+  /* ---- Progress ---- */
+  .progress-card {
+    background: var(--card);
+    border: 1px solid #2a313a;
+    border-radius: 16px;
+    padding: 13px 16px;
+    margin-bottom: 14px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-label strong { color: var(--text); }
+  .progress-track {
+    height: 10px;
+    border-radius: 99px;
+    background: var(--card-soft);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.6s ease;
+  }
+
+  /* ---- Chart ---- */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid #2a313a;
+    border-radius: 16px;
+    padding: 13px 16px 8px;
+    margin-bottom: 14px;
+  }
+  .chart-card h3 { font-size: 0.85rem; margin-bottom: 2px; }
+  .chart-card .chart-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 6px; }
+  .chart-card svg { width: 100%; height: auto; display: block; }
+
+  /* ---- Past weeks toggle ---- */
+  .past-toggle {
+    display: block;
+    width: 100%;
+    background: var(--card);
+    border: 1px solid #2a313a;
+    border-radius: 14px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 12px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .past-toggle[hidden] { display: none; }
+  #past-weeks.collapsed { display: none; }
+
+  /* ---- Week cards ---- */
+  .week {
+    background: var(--card);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #2a313a;
+  }
+  .week.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .week.past { opacity: 0.55; }
+  .week-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 16px 10px;
+  }
+  .week-head h2 { font-size: 1.05rem; }
+  .week-head .dates { color: var(--muted); font-size: 0.8rem; }
+  .now-chip {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #000;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    padding: 3px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .note-chip {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--bg);
+    background: var(--rest);
+    border-radius: 99px;
+    padding: 3px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+    text-transform: uppercase;
+  }
+
+  .run {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-top: 1px solid #2a313a;
+  }
+  .run-badge {
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 99px;
+    color: #0d0f12;
+    min-width: 76px;
+    text-align: center;
+  }
+  .run-badge.easy { background: var(--easy); }
+  .run-badge.long { background: var(--long); }
+  .run-badge.intervals { background: var(--intervals); }
+  .run-badge.tempo { background: var(--tempo); }
+  .run-badge.trial { background: #ef5350; }
+  .run-badge.race { background: linear-gradient(90deg, #ffd54f, var(--accent)); }
+  .run-main { flex: 1; min-width: 0; }
+  .run-title { font-weight: 600; font-size: 0.98rem; }
+  .run-sub { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+  .run.done .run-title { text-decoration: line-through; color: var(--muted); }
+
+  .tick {
+    flex: 0 0 auto;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #3a434e;
+    background: transparent;
+    color: transparent;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .run.done .tick { background: var(--done); border-color: var(--done); color: #fff; }
+
+  details.workout {
+    border-top: 1px solid #2a313a;
+  }
+  details.workout summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 11px 16px;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  details.workout summary::-webkit-details-marker { display: none; }
+  details.workout summary::before { content: "▸ "; }
+  details.workout[open] summary::before { content: "▾ "; }
+  .steps { padding: 0 14px 14px; }
+  .step {
+    background: var(--card-soft);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+  }
+  .step .label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+  }
+  .step .label.work { color: var(--accent); }
+  .step .label.rest { color: var(--rest); }
+  .step .label.repeat { color: #ffb74d; }
+  .step .pace { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+  .placeholder {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 22px 16px 10px;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 26px;
+  }
+
+  /* ---- Confetti ---- */
+  .confetti {
+    position: fixed;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 99;
+    animation: confetti-fall 2s ease-in forwards;
+  }
+  @keyframes confetti-fall {
+    0%   { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); }
+  }
+</style>
+</head>
+<body class="view-home">
+<header>
+  <h1>🏃‍♀️ Bridge to Brisbane</h1>
+  <div class="countdown" id="countdown"></div>
+</header>
+
+<div class="hero" id="hero"></div>
+
+<div class="progress-card">
+  <div class="progress-label" id="progress-label"></div>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="chart-card">
+  <h3>Total distance</h3>
+  <div class="chart-sub" id="chart-sub"></div>
+  <div id="chart"></div>
+</div>
+
+<button class="past-toggle" id="past-toggle" hidden></button>
+<div id="past-weeks" class="collapsed"></div>
+<div id="weeks"></div>
+
+<div class="placeholder">That's the whole plan — see you at the finish line 🏅</div>
+<footer>Runs: Wednesday + Saturday/Sunday (flexible)</footer>
+
+<nav class="tabbar">
+  <button id="tab-home" class="active">🏠 Home</button>
+  <button id="tab-plan">📋 Full plan</button>
+</nav>
+
+<script>
+// ===================== PLAN DATA =====================
+// Race day: Sunday 13 September 2026.
+// Week 1 starts Monday 8 June 2026.
+// run types: easy | long | intervals | tempo | trial | race
+// "workout" is optional structured detail for interval/tempo sessions.
+
+const RACE_DATE = "2026-09-13";
+const WEEK1_MONDAY = "2026-06-08";
+
+const PLAN = [
+  {
+    week: 1,
+    runs: [
+      { type: "easy", title: "3.5 km easy" },
+      { type: "long", title: "6 km long run" },
+    ],
+  },
+  {
+    week: 2,
+    runs: [
+      { type: "easy", title: "5 km easy" },
+      { type: "long", title: "6.5 km long run" },
+    ],
+  },
+  {
+    week: 3,
+    runs: [
+      {
+        type: "intervals",
+        title: "6.4 km intervals — Fast 8-4-2s",
+        sub: "Will read longer on the watch with walk breaks",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.6 km at a conversational pace", pace: "No faster than 8:10/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Session", kind: "work", text: "800 m", pace: "6:55/km, then 90s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "400 m", pace: "6:45/km, then 90s walking rest" },
+          { label: "Rest", kind: "rest", text: "60s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "200 m", pace: "6:30/km, then 40s walking rest" },
+          { label: "Rest", kind: "rest", text: "40s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.6 km at a conversational pace" },
+        ],
+      },
+      { type: "long", title: "7 km long run" },
+    ],
+  },
+  {
+    week: 4,
+    note: "Deload week",
+    runs: [
+      {
+        type: "tempo",
+        title: "4.4 km tempo — Rolling 400s",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.6 km at a conversational pace", pace: "No faster than 8:10/km" },
+          { label: "Repeat ×2", kind: "repeat", text: "400 m at 7:10/km + 400 m at 7:45/km", pace: "No rest between — roll straight through" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.2 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "5 km long run" },
+    ],
+  },
+  {
+    week: 5,
+    runs: [
+      { type: "easy", title: "6.5 km easy" },
+      { type: "long", title: "7 km long run" },
+    ],
+  },
+  {
+    week: 6,
+    runs: [
+      {
+        type: "intervals",
+        title: "7 km intervals — 400m Repeats",
+        workout: [
+          { label: "Warm up", kind: "work", text: "2 km at a conversational pace", pace: "No faster than 8:00/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "400 m at 6:25/km", pace: "6:10–6:40/km, then 60s walking rest" },
+          { label: "Rest", kind: "rest", text: "60s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "400 m at 6:25/km", pace: "6:10–6:40/km, then 60s walking rest" },
+          { label: "Rest", kind: "rest", text: "60s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.8 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "7.5 km long run" },
+    ],
+  },
+  {
+    week: 7,
+    runs: [
+      {
+        type: "tempo",
+        title: "7 km tempo — Tempo 2-1-1",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km at a conversational pace", pace: "No faster than 7:55/km" },
+          { label: "Session", kind: "work", text: "2 km at 7:10/km", pace: "then 120s walking rest" },
+          { label: "Session", kind: "work", text: "1 km at 7:00/km", pace: "then 90s walking rest" },
+          { label: "Session", kind: "work", text: "1 km at 7:00/km", pace: "then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.5 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "8 km long run", sub: "Add hills — aim for 75–150 m total elevation (map a route on Strava)" },
+    ],
+  },
+  {
+    week: 8,
+    runs: [
+      { type: "easy", title: "6.5 km easy" },
+      { type: "long", title: "9 km long run", sub: "Hills — aim for 90–180 m total elevation" },
+    ],
+  },
+  {
+    week: 9,
+    runs: [
+      {
+        type: "trial",
+        title: "4.9 km — 2 Mile Time Trial",
+        sub: "35–45 min all up",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.2 km at a conversational pace", pace: "No faster than 7:50/km" },
+          { label: "Rest", kind: "rest", text: "180s walking rest" },
+          { label: "Time trial", kind: "work", text: "3.22 km (2 miles) at 6:40/km", pace: "then 180s walking rest" },
+          { label: "Cool down", kind: "work", text: "500 m at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "6 km long run" },
+    ],
+  },
+  {
+    week: 10,
+    runs: [
+      {
+        type: "tempo",
+        title: "7.5 km tempo — Progressive Run",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km at a conversational pace", pace: "No faster than 7:45/km" },
+          { label: "Session", kind: "work", text: "1 km at 7:30/km" },
+          { label: "Session", kind: "work", text: "2 km at 7:10/km" },
+          { label: "Session", kind: "work", text: "1 km at 7:00/km" },
+          { label: "Session", kind: "work", text: "1 km at 6:50/km", pace: "then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "10 km long run", sub: "Hills — aim for 100–200 m total elevation" },
+    ],
+  },
+  {
+    week: 11,
+    runs: [
+      { type: "easy", title: "6.5 km easy" },
+      { type: "long", title: "11 km long run" },
+    ],
+  },
+  {
+    week: 12,
+    runs: [
+      {
+        type: "intervals",
+        title: "7.5 km speed — 1km Repeats",
+        workout: [
+          { label: "Warm up", kind: "work", text: "2 km at a conversational pace", pace: "No faster than 7:40/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "1 km at 6:35/km", pace: "6:20–6:50/km, then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.5 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "12 km long run" },
+    ],
+  },
+  {
+    week: 13,
+    runs: [
+      {
+        type: "tempo",
+        title: "5 km tempo — Rolling 400s",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1 km at a conversational pace", pace: "No faster than 7:35/km" },
+          { label: "Repeat ×4", kind: "repeat", text: "400 m at 6:40/km + 400 m at 7:20/km", pace: "No rest between — roll straight through" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Cool down", kind: "work", text: "800 m at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "8 km long run", sub: "Hills — aim for 80–160 m total elevation" },
+    ],
+  },
+  {
+    week: 14,
+    note: "Race week!",
+    runs: [
+      {
+        type: "intervals",
+        title: "5 km taper intervals — Taper 400s",
+        workout: [
+          { label: "Warm up", kind: "work", text: "2 km at a conversational pace", pace: "No faster than 7:30/km, keeping things easy" },
+          { label: "Rest", kind: "rest", text: "60s walking rest" },
+          { label: "Repeat ×5", kind: "repeat", text: "400 m at 6:45/km", pace: "A little faster than your target 10 km pace of 6:50/km, then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "race", title: "Bridge to Brisbane — 10 km RACE! 🎉", sub: "Sun 13 Sep · Target pace 6:50/km ≈ 1:08:20 finish" },
+    ],
+  },
+];
+// =====================================================
+
+const MS_DAY = 86400000;
+const fmt = d => d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+
+function weekDates(weekNum) {
+  const mon = new Date(WEEK1_MONDAY + "T00:00:00");
+  mon.setDate(mon.getDate() + (weekNum - 1) * 7);
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  return { mon, sun };
+}
+
+function currentWeekNum() {
+  const start = new Date(WEEK1_MONDAY + "T00:00:00");
+  return Math.floor((Date.now() - start) / (7 * MS_DAY)) + 1;
+}
+
+function runKm(r) {
+  const m = r.title.match(/([\d.]+)\s*km/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+const nowWeek = currentWeekNum();
+const doneState = JSON.parse(localStorage.getItem("b2b-done") || "{}");
+const TOTAL_RUNS = PLAN.reduce((s, w) => s + w.runs.length, 0);
+const TOTAL_KM = PLAN.reduce((s, w) => s + w.runs.reduce((a, r) => a + runKm(r), 0), 0);
+
+// ---- Countdown ----
+(function () {
+  const race = new Date(RACE_DATE + "T00:00:00");
+  const days = Math.ceil((race - new Date().setHours(0,0,0,0)) / MS_DAY);
+  const el = document.getElementById("countdown");
+  el.innerHTML = days > 1
+    ? `<strong>${days} days</strong> until race day — Sun 13 Sep`
+    : days === 1 ? "<strong>Race day tomorrow!</strong>"
+    : days === 0 ? "<strong>RACE DAY! 🎉</strong>"
+    : "Race complete — well done! 🏅";
+})();
+
+// ---- Confetti ----
+function confetti(x, y, n) {
+  const colors = ["#ff7a18", "#ffd54f", "#4fc3f7", "#81c784", "#ce93d8", "#ef5350"];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement("span");
+    p.className = "confetti";
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.setProperty("--dx", (Math.random() * 260 - 130).toFixed(0) + "px");
+    p.style.setProperty("--dy", (Math.random() * 220 + 90).toFixed(0) + "px");
+    p.style.setProperty("--rot", (Math.random() * 720 - 360).toFixed(0) + "deg");
+    p.style.animationDuration = (1.5 + Math.random() * 1.2).toFixed(2) + "s";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3000);
+  }
+}
+
+// ---- Hero (next up) ----
+function renderHero() {
+  const hero = document.getElementById("hero");
+  let next = null;
+  outer:
+  for (const w of PLAN) {
+    for (let i = 0; i < w.runs.length; i++) {
+      if (!doneState[`w${w.week}r${i}`]) { next = { w, r: w.runs[i], i }; break outer; }
+    }
+  }
+  if (!next) {
+    hero.className = "hero race-day";
+    hero.innerHTML = `<div class="eyebrow">PLAN COMPLETE</div>
+      <div class="hero-title">Every run done — you smashed it! 🏅</div>`;
+    hero.onclick = null;
+    return;
+  }
+  const day = next.i === 0 ? "Wednesday" : "Sat or Sun";
+  const isRace = next.r.type === "race";
+  hero.className = "hero" + (isRace ? " race-day" : "");
+  hero.innerHTML = `
+    <div class="eyebrow">${isRace ? "🏁 UP NEXT: RACE DAY" : "NEXT UP"}</div>
+    <div class="hero-run">
+      <span class="run-badge ${next.r.type}">${next.r.type}</span>
+      <div>
+        <div class="hero-title">${next.r.title}</div>
+        <div class="hero-meta">Week ${next.w.week} · ${isRace ? "Sunday" : day}${next.r.sub ? " · " + next.r.sub : ""}</div>
+      </div>
+    </div>
+    <div class="go-hint">Tap to jump to this week ↓</div>`;
+  hero.onclick = () => {
+    setView("plan");
+    const card = document.querySelector(`[data-week="${next.w.week}"]`);
+    if (card) {
+      const past = document.getElementById("past-weeks");
+      if (past.contains(card) && past.classList.contains("collapsed")) togglePast();
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+}
+
+// ---- Progress bar ----
+function renderProgress() {
+  let doneRuns = 0, doneKm = 0;
+  PLAN.forEach(w => w.runs.forEach((r, i) => {
+    if (doneState[`w${w.week}r${i}`]) { doneRuns++; doneKm += runKm(r); }
+  }));
+  document.getElementById("progress-label").innerHTML =
+    `<span><strong>${doneRuns}</strong> of ${TOTAL_RUNS} runs</span>` +
+    `<span><strong>${doneKm.toFixed(1)}</strong> of ${TOTAL_KM.toFixed(1)} km</span>`;
+  document.getElementById("progress-fill").style.width = (doneRuns / TOTAL_RUNS * 100).toFixed(1) + "%";
+}
+
+// ---- Cumulative distance chart ----
+function renderChart() {
+  const W = 340, H = 150, padL = 34, padR = 10, padT = 12, padB = 22;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  let cum = 0, dcum = 0;
+  const planned = [], doneCum = [];
+  PLAN.forEach(w => {
+    w.runs.forEach((r, i) => {
+      cum += runKm(r);
+      if (doneState[`w${w.week}r${i}`]) dcum += runKm(r);
+    });
+    planned.push(cum);
+    doneCum.push(dcum);
+  });
+  const maxY = cum;
+  const x = i => padL + (i / (PLAN.length - 1)) * plotW;
+  const y = v => padT + plotH - (v / maxY) * plotH;
+  const pts = arr => arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+
+  const doneArea = `M ${x(0)},${y(0)} L ` + pts(doneCum) + ` L ${x(PLAN.length - 1)},${y(0)} Z`;
+  const gridY = [0.25, 0.5, 0.75].map(f =>
+    `<line x1="${padL}" y1="${y(maxY * f)}" x2="${W - padR}" y2="${y(maxY * f)}" stroke="#2a313a" stroke-width="1"/>`).join("");
+  const weekLabels = [1, 7, 14].map(n =>
+    `<text x="${x(n - 1)}" y="${H - 6}" fill="#9aa3ad" font-size="9" text-anchor="middle">W${n}</text>`).join("");
+
+  document.getElementById("chart").innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      ${gridY}
+      <path d="${doneArea}" fill="rgba(76,175,80,0.25)"/>
+      <polyline points="${pts(doneCum)}" fill="none" stroke="#4caf50" stroke-width="2"/>
+      <polyline points="${pts(planned)}" fill="none" stroke="#ff7a18" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="${padL - 5}" y="${y(maxY) + 4}" fill="#9aa3ad" font-size="9" text-anchor="end">${Math.round(maxY)}</text>
+      <text x="${padL - 5}" y="${y(maxY / 2) + 4}" fill="#9aa3ad" font-size="9" text-anchor="end">${Math.round(maxY / 2)}</text>
+      <text x="${padL - 5}" y="${y(0) + 4}" fill="#9aa3ad" font-size="9" text-anchor="end">0</text>
+      ${weekLabels}
+    </svg>`;
+  const dKm = doneCum[doneCum.length - 1];
+  document.getElementById("chart-sub").innerHTML =
+    `<span style="color:#4caf50">●</span> You: ${dKm.toFixed(1)} km &nbsp; <span style="color:#ff7a18">●</span> Plan: ${Math.round(maxY)} km by race day`;
+}
+
+// ---- Week cards ----
+const container = document.getElementById("weeks");
+const pastContainer = document.getElementById("past-weeks");
+
+PLAN.forEach(w => {
+  const { mon, sun } = weekDates(w.week);
+  const card = document.createElement("div");
+  card.dataset.week = w.week;
+  card.className = "week" + (w.week === nowWeek ? " current" : w.week < nowWeek ? " past" : "");
+
+  card.innerHTML = `
+    <div class="week-head">
+      <h2>Week ${w.week}${w.week === nowWeek ? '<span class="now-chip">THIS WEEK</span>' : ""}${w.note ? `<span class="note-chip">${w.note}</span>` : ""}</h2>
+      <span class="dates">${fmt(mon)} – ${fmt(sun)}</span>
+    </div>`;
+
+  w.runs.forEach((r, i) => {
+    const key = `w${w.week}r${i}`;
+    const row = document.createElement("div");
+    row.className = "run" + (doneState[key] ? " done" : "");
+    row.innerHTML = `
+      <span class="run-badge ${r.type}">${r.type}</span>
+      <div class="run-main">
+        <div class="run-title">${r.title}</div>
+        ${r.sub ? `<div class="run-sub">${r.sub}</div>` : ""}
+      </div>
+      <button class="tick" aria-label="Mark done">✓</button>`;
+    row.querySelector(".tick").addEventListener("click", e => {
+      doneState[key] = !doneState[key];
+      row.classList.toggle("done", !!doneState[key]);
+      localStorage.setItem("b2b-done", JSON.stringify(doneState));
+      if (doneState[key]) {
+        const rect = e.target.getBoundingClientRect();
+        confetti(rect.left + rect.width / 2, rect.top, 26);
+        const weekDone = w.runs.every((_, j) => doneState[`w${w.week}r${j}`]);
+        if (weekDone) {
+          const crect = card.getBoundingClientRect();
+          confetti(crect.left + crect.width / 2, Math.max(crect.top, 60), 60);
+        }
+      }
+      renderHero(); renderProgress(); renderChart();
+    });
+    card.appendChild(row);
+
+    if (r.workout) {
+      const det = document.createElement("details");
+      det.className = "workout";
+      det.innerHTML = `<summary>Workout breakdown</summary>
+        <div class="steps">${r.workout.map(s => `
+          <div class="step">
+            <div class="label ${s.kind}">${s.label}</div>
+            <div>${s.text}</div>
+            ${s.pace ? `<div class="pace">${s.pace}</div>` : ""}
+          </div>`).join("")}
+        </div>`;
+      card.appendChild(det);
+    }
+  });
+
+  (w.week < nowWeek ? pastContainer : container).appendChild(card);
+});
+
+// ---- Past weeks toggle ----
+const pastToggle = document.getElementById("past-toggle");
+const pastCount = pastContainer.children.length;
+function togglePast() {
+  const collapsed = pastContainer.classList.toggle("collapsed");
+  pastToggle.textContent = collapsed
+    ? `▸ Show ${pastCount} past week${pastCount === 1 ? "" : "s"}`
+    : "▾ Hide past weeks";
+}
+if (pastCount > 0) {
+  pastToggle.hidden = false;
+  pastToggle.textContent = `▸ Show ${pastCount} past week${pastCount === 1 ? "" : "s"}`;
+  pastToggle.addEventListener("click", togglePast);
+}
+
+// ---- View switching (Home / Plan) ----
+function setView(view) {
+  document.body.className = "view-" + view;
+  document.getElementById("tab-home").classList.toggle("active", view === "home");
+  document.getElementById("tab-plan").classList.toggle("active", view === "plan");
+  if (view === "home") window.scrollTo({ top: 0 });
+}
+document.getElementById("tab-home").addEventListener("click", () => setView("home"));
+document.getElementById("tab-plan").addEventListener("click", () => setView("plan"));
+
+renderHero();
+renderProgress();
+renderChart();
+</script>
+</body>
+</html>

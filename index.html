@@ -37,6 +37,7 @@
 
   /* ---- Views (Home / Plan) ---- */
   body.view-home .week:not(.current),
+  body.view-home .phase-head,
   body.view-home .past-toggle,
   body.view-home #past-weeks,
   body.view-home .placeholder,
@@ -74,9 +75,10 @@
     border-color: transparent;
     color: #000;
   }
+
   header {
     text-align: center;
-    padding: 24px 0 14px;
+    padding: 24px 0 10px;
   }
   header h1 {
     font-size: 1.45rem;
@@ -91,6 +93,28 @@
     font-size: 0.9rem;
   }
   .countdown strong { color: var(--text); font-size: 1.05rem; }
+
+  /* ---- Block switcher ---- */
+  .block-pills {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0 14px;
+  }
+  .block-pills button {
+    background: var(--card);
+    border: 1px solid #2a313a;
+    border-radius: 99px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 7px 16px;
+    cursor: pointer;
+  }
+  .block-pills button.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 
   /* ---- Hero (next up) ---- */
   .hero {
@@ -128,11 +152,13 @@
   .progress-label {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     font-size: 0.8rem;
     color: var(--muted);
     margin-bottom: 8px;
   }
   .progress-label strong { color: var(--text); }
+  .streak { color: #ffb74d; font-weight: 700; }
   .progress-track {
     height: 10px;
     border-radius: 99px;
@@ -158,7 +184,7 @@
   .chart-card .chart-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 6px; }
   .chart-card svg { width: 100%; height: auto; display: block; }
 
-  /* ---- Past weeks toggle ---- */
+  /* ---- Past weeks toggle / phase headers ---- */
   .past-toggle {
     display: block;
     width: 100%;
@@ -174,6 +200,23 @@
   }
   .past-toggle[hidden] { display: none; }
   #past-weeks.collapsed { display: none; }
+  .phase-head {
+    margin: 22px 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .phase-head small {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.75rem;
+  }
 
   /* ---- Week cards ---- */
   .week {
@@ -220,7 +263,7 @@
   .run {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 13px 16px;
     border-top: 1px solid #2a313a;
   }
@@ -242,10 +285,13 @@
   .run-badge.tempo { background: var(--tempo); }
   .run-badge.trial { background: #ef5350; }
   .run-badge.race { background: linear-gradient(90deg, #ffd54f, var(--accent)); }
+  .run-badge.quality { background: #ffb74d; }
   .run-main { flex: 1; min-width: 0; }
   .run-title { font-weight: 600; font-size: 0.98rem; }
   .run-sub { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
   .run.done .run-title { text-decoration: line-through; color: var(--muted); }
+  .run.skipped .run-title { color: var(--muted); font-style: italic; }
+  .run.skipped .run-badge { opacity: 0.45; }
 
   .tick {
     flex: 0 0 auto;
@@ -254,11 +300,23 @@
     border: 2px solid #3a434e;
     background: transparent;
     color: transparent;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
   }
   .run.done .tick { background: var(--done); border-color: var(--done); color: #fff; }
+  .skipbtn {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid #3a434e;
+    background: transparent;
+    color: #3a434e;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .run.skipped .skipbtn { background: var(--rest); border-color: var(--rest); color: #0d0f12; }
 
   details.workout {
     border-top: 1px solid #2a313a;
@@ -325,9 +383,11 @@
 </head>
 <body class="view-home">
 <header>
-  <h1>🏃‍♀️ Bridge to Brisbane</h1>
+  <h1 id="block-title">🏃‍♀️ Bridge to Brisbane</h1>
   <div class="countdown" id="countdown"></div>
 </header>
+
+<div class="block-pills" id="block-pills"></div>
 
 <div class="hero" id="hero"></div>
 
@@ -346,8 +406,8 @@
 <div id="past-weeks" class="collapsed"></div>
 <div id="weeks"></div>
 
-<div class="placeholder">That's the whole plan — see you at the finish line 🏅</div>
-<footer>Runs: Wednesday + Saturday/Sunday (flexible)</footer>
+<div class="placeholder" id="placeholder"></div>
+<footer>Tap ✓ when a run's done · tap ✕ to skip it guilt-free</footer>
 
 <nav class="tabbar">
   <button id="tab-home" class="active">🏠 Home</button>
@@ -356,15 +416,11 @@
 
 <script>
 // ===================== PLAN DATA =====================
-// Race day: Sunday 13 September 2026.
-// Week 1 starts Monday 8 June 2026.
-// run types: easy | long | intervals | tempo | trial | race
-// "workout" is optional structured detail for interval/tempo sessions.
+// Two training blocks. run types: easy | long | intervals | tempo | trial | race | quality
+// "workout" = optional structured breakdown. Week "note" renders as a chip,
+// "phase" renders a section header above that week in the Full plan view.
 
-const RACE_DATE = "2026-09-13";
-const WEEK1_MONDAY = "2026-06-08";
-
-const PLAN = [
+const B2B_PLAN = [
   {
     week: 1,
     runs: [
@@ -559,20 +615,294 @@ const PLAN = [
     ],
   },
 ];
+
+const STRIDES = [
+  { label: "Warm up", kind: "work", text: "3.5 km easy, conversational" },
+  { label: "Repeat ×6", kind: "repeat", text: "20s stride — fast but relaxed, not sprinting", pace: "60s walk between" },
+  { label: "Cool down", kind: "work", text: "1 km easy" },
+];
+
+const BASE_PLAN = [
+  {
+    week: 1,
+    phase: { title: "Phase 1 · Re-entry", sub: "Find the rhythm again. No paces, no pressure — 2 runs a week, all conversational." },
+    runs: [
+      { type: "easy", title: "4 km easy" },
+      { type: "long", title: "6 km long run", sub: "~50 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 2,
+    runs: [
+      { type: "easy", title: "4.5 km easy" },
+      { type: "long", title: "7 km long run", sub: "~58 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 3,
+    runs: [
+      { type: "easy", title: "3 km easy jog", sub: "Optional — skip guilt-free, this is the new 3rd run trying itself on" },
+      { type: "easy", title: "5 km easy" },
+      { type: "long", title: "7.5 km long run", sub: "~62 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 4,
+    runs: [
+      { type: "easy", title: "3.5 km easy jog", sub: "Optional — but by now it might just feel normal" },
+      { type: "easy", title: "5 km easy" },
+      { type: "long", title: "8 km long run", sub: "~66 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 5,
+    phase: { title: "Phase 2 · Engine room", sub: "3 runs a week settles in: one easy, one fun & fast, one long. Deloads every 4th week." },
+    runs: [
+      { type: "easy", title: "5 km easy" },
+      { type: "quality", title: "5 km — Easy + Strides", workout: STRIDES },
+      { type: "long", title: "8.5 km long run", sub: "~70 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 6,
+    runs: [
+      { type: "easy", title: "5.5 km easy" },
+      {
+        type: "quality",
+        title: "5.5 km — Fartlek",
+        workout: [
+          { label: "Warm up", kind: "work", text: "10 min easy" },
+          { label: "Repeat ×8", kind: "repeat", text: "1 min brisk (around 10k effort)", pace: "2 min easy jog between" },
+          { label: "Cool down", kind: "work", text: "5 min easy" },
+        ],
+      },
+      { type: "long", title: "9 km long run", sub: "~74 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 7,
+    runs: [
+      { type: "easy", title: "6 km easy" },
+      {
+        type: "quality",
+        title: "5.5 km — Hill Repeats",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Repeat ×6", kind: "repeat", text: "45s uphill, strong effort", pace: "Walk back down to recover" },
+          { label: "Cool down", kind: "work", text: "1.5 km easy" },
+        ],
+      },
+      { type: "long", title: "9.5 km long run", sub: "~78 min at your 8:15/km · hills if you fancy" },
+    ],
+  },
+  {
+    week: 8,
+    note: "Deload",
+    runs: [
+      { type: "easy", title: "4 km easy" },
+      { type: "long", title: "7 km long run", sub: "~58 min — enjoy the short one" },
+    ],
+  },
+  {
+    week: 9,
+    note: "Pretend race!",
+    runs: [
+      { type: "easy", title: "4 km easy" },
+      { type: "quality", title: "4 km — Easy + 4 strides", sub: "Light legs-primer before the weekend", workout: [
+        { label: "Warm up", kind: "work", text: "3 km easy, conversational" },
+        { label: "Repeat ×4", kind: "repeat", text: "20s stride — fast but relaxed", pace: "60s walk between" },
+        { label: "Cool down", kind: "work", text: "600 m easy" },
+      ] },
+      { type: "race", title: "10 km Pretend Race 🎖", sub: "All-out solo effort — pick a flat route, race yourself, beat your B2B time" },
+    ],
+  },
+  {
+    week: 10,
+    runs: [
+      { type: "easy", title: "6 km easy" },
+      {
+        type: "quality",
+        title: "5 km — Rolling 400s",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Repeat ×3", kind: "repeat", text: "400 m brisk + 400 m float", pace: "No rest between — roll straight through" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1 km easy" },
+        ],
+      },
+      { type: "long", title: "10 km long run", sub: "~83 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 11,
+    runs: [
+      { type: "easy", title: "6 km easy" },
+      {
+        type: "quality",
+        title: "5.5 km — Fartlek",
+        workout: [
+          { label: "Warm up", kind: "work", text: "10 min easy" },
+          { label: "Repeat ×8", kind: "repeat", text: "1 min brisk (around 10k effort)", pace: "2 min easy jog between" },
+          { label: "Cool down", kind: "work", text: "5 min easy" },
+        ],
+      },
+      { type: "long", title: "10.5 km long run", sub: "~87 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 12,
+    note: "Christmas deload",
+    runs: [
+      { type: "easy", title: "4.5 km easy", sub: "Whenever it fits around the festivities" },
+      { type: "long", title: "7.5 km long run", sub: "~62 min · two runs this week is a win 🎄" },
+    ],
+  },
+  {
+    week: 13,
+    phase: { title: "Phase 3 · Ramp", sub: "Tempo work returns and the long run consolidates. Ends with 13 km in the legs — ready for HM training." },
+    runs: [
+      { type: "easy", title: "6 km easy" },
+      {
+        type: "tempo",
+        title: "6 km — Tempo 20 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Tempo", kind: "work", text: "20 min comfortably hard", pace: "Around 7:15–7:30/km — adjust off your pretend-race result" },
+          { label: "Cool down", kind: "work", text: "1 km easy" },
+        ],
+      },
+      { type: "long", title: "10 km long run", sub: "~83 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 14,
+    runs: [
+      { type: "easy", title: "6.5 km easy" },
+      {
+        type: "quality",
+        title: "5.5 km — Hill Repeats",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Repeat ×6", kind: "repeat", text: "45s uphill, strong effort", pace: "Walk back down to recover" },
+          { label: "Cool down", kind: "work", text: "1.5 km easy" },
+        ],
+      },
+      { type: "long", title: "11 km long run", sub: "~91 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 15,
+    runs: [
+      { type: "easy", title: "6.5 km easy" },
+      {
+        type: "tempo",
+        title: "6.5 km — Tempo 25 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Tempo", kind: "work", text: "25 min comfortably hard", pace: "Around 7:15–7:30/km" },
+          { label: "Cool down", kind: "work", text: "1 km easy" },
+        ],
+      },
+      { type: "long", title: "11.5 km long run", sub: "~95 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 16,
+    note: "Deload",
+    runs: [
+      { type: "easy", title: "5 km easy" },
+      { type: "long", title: "8 km long run", sub: "~66 min — soak it up" },
+    ],
+  },
+  {
+    week: 17,
+    runs: [
+      { type: "easy", title: "7 km easy" },
+      {
+        type: "tempo",
+        title: "7 km — Tempo 2×15 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Tempo", kind: "work", text: "15 min comfortably hard" },
+          { label: "Rest", kind: "rest", text: "3 min walk" },
+          { label: "Tempo", kind: "work", text: "15 min comfortably hard" },
+          { label: "Cool down", kind: "work", text: "1 km easy" },
+        ],
+      },
+      { type: "long", title: "12 km long run", sub: "~99 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 18,
+    runs: [
+      { type: "easy", title: "7 km easy" },
+      { type: "quality", title: "5 km — Easy + Strides", workout: STRIDES },
+      { type: "long", title: "12.5 km long run", sub: "~103 min at your 8:15/km" },
+    ],
+  },
+  {
+    week: 19,
+    note: "Final week!",
+    runs: [
+      { type: "easy", title: "6 km easy" },
+      {
+        type: "tempo",
+        title: "7 km — Tempo 30 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km easy" },
+          { label: "Tempo", kind: "work", text: "30 min comfortably hard", pace: "Around 7:15–7:30/km" },
+          { label: "Cool down", kind: "work", text: "1 km easy" },
+        ],
+      },
+      { type: "long", title: "13 km long run", sub: "~107 min · your longest ever — then HM training begins 💪" },
+    ],
+  },
+];
+
+const BLOCKS = [
+  {
+    id: "b2b",
+    label: "B2B 10K",
+    header: "🏃‍♀️ Bridge to Brisbane",
+    week1: "2026-06-08",
+    target: "2026-09-13",
+    targetLabel: "race day — Sun 13 Sep",
+    dayZeroText: "RACE DAY! 🎉",
+    afterText: "Race complete — well done! 🏅",
+    placeholder: "That's the whole plan — see you at the finish line 🏅",
+    keyPrefix: "",
+    plan: B2B_PLAN,
+  },
+  {
+    id: "base",
+    label: "Base Block",
+    header: "🏗 Base Block → Half Marathon",
+    week1: "2026-10-05",
+    target: "2027-02-15",
+    targetLabel: "until HM training begins — Mon 15 Feb",
+    dayZeroText: "Base block done — HM training starts today! 🏗",
+    afterText: "Base block complete — on to the half marathon build! 🏗",
+    placeholder: "19 weeks of base, then the half marathon build begins (race: Sun 6 June 2027) 🏅",
+    keyPrefix: "B2:",
+    plan: BASE_PLAN,
+  },
+];
 // =====================================================
 
 const MS_DAY = 86400000;
 const fmt = d => d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+const doneState = JSON.parse(localStorage.getItem("b2b-done") || "{}");
+const saveState = () => localStorage.setItem("b2b-done", JSON.stringify(doneState));
 
-function weekDates(weekNum) {
-  const mon = new Date(WEEK1_MONDAY + "T00:00:00");
+function weekDates(block, weekNum) {
+  const mon = new Date(block.week1 + "T00:00:00");
   mon.setDate(mon.getDate() + (weekNum - 1) * 7);
   const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
   return { mon, sun };
 }
 
-function currentWeekNum() {
-  const start = new Date(WEEK1_MONDAY + "T00:00:00");
+function currentWeekNum(block) {
+  const start = new Date(block.week1 + "T00:00:00");
   return Math.floor((Date.now() - start) / (7 * MS_DAY)) + 1;
 }
 
@@ -581,22 +911,23 @@ function runKm(r) {
   return m ? parseFloat(m[1]) : 0;
 }
 
-const nowWeek = currentWeekNum();
-const doneState = JSON.parse(localStorage.getItem("b2b-done") || "{}");
-const TOTAL_RUNS = PLAN.reduce((s, w) => s + w.runs.length, 0);
-const TOTAL_KM = PLAN.reduce((s, w) => s + w.runs.reduce((a, r) => a + runKm(r), 0), 0);
+const rkey = (block, week, i) => block.keyPrefix + "w" + week + "r" + i;
+const isDone = v => v === true;
+const isSkipped = v => v === "skip";
 
-// ---- Countdown ----
-(function () {
-  const race = new Date(RACE_DATE + "T00:00:00");
-  const days = Math.ceil((race - new Date().setHours(0,0,0,0)) / MS_DAY);
-  const el = document.getElementById("countdown");
-  el.innerHTML = days > 1
-    ? `<strong>${days} days</strong> until race day — Sun 13 Sep`
-    : days === 1 ? "<strong>Race day tomorrow!</strong>"
-    : days === 0 ? "<strong>RACE DAY! 🎉</strong>"
-    : "Race complete — well done! 🏅";
-})();
+// ---- Active block: saved choice, else the block whose dates contain today ----
+function defaultBlock() {
+  const today = Date.now();
+  for (const b of BLOCKS) {
+    const start = new Date(b.week1 + "T00:00:00").getTime();
+    const end = start + b.plan.length * 7 * MS_DAY;
+    if (today < end) return b.id;
+  }
+  return BLOCKS[BLOCKS.length - 1].id;
+}
+let activeId = localStorage.getItem("b2b-block") || defaultBlock();
+if (!BLOCKS.some(b => b.id === activeId)) activeId = defaultBlock();
+const active = () => BLOCKS.find(b => b.id === activeId);
 
 // ---- Confetti ----
 function confetti(x, y, n) {
@@ -616,24 +947,64 @@ function confetti(x, y, n) {
   }
 }
 
+// ---- Header + countdown ----
+function renderHeader() {
+  const b = active();
+  document.getElementById("block-title").textContent = b.header;
+  const target = new Date(b.target + "T00:00:00");
+  const days = Math.ceil((target - new Date().setHours(0, 0, 0, 0)) / MS_DAY);
+  const el = document.getElementById("countdown");
+  el.innerHTML = days > 1 ? `<strong>${days} days</strong> ${b.targetLabel}`
+    : days === 1 ? `<strong>1 day</strong> ${b.targetLabel}`
+    : days === 0 ? `<strong>${b.dayZeroText}</strong>`
+    : b.afterText;
+  document.getElementById("placeholder").textContent = b.placeholder;
+}
+
+// ---- Block pills ----
+function renderPills() {
+  const el = document.getElementById("block-pills");
+  el.innerHTML = "";
+  BLOCKS.forEach(b => {
+    const btn = document.createElement("button");
+    btn.textContent = b.label;
+    btn.className = b.id === activeId ? "active" : "";
+    btn.addEventListener("click", () => {
+      activeId = b.id;
+      localStorage.setItem("b2b-block", activeId);
+      renderAll();
+      window.scrollTo({ top: 0 });
+    });
+    el.appendChild(btn);
+  });
+}
+
+// ---- Day-of-week hint for a run's slot ----
+function dayLabel(runs, i) {
+  if (i === runs.length - 1) return "Sat or Sun";
+  if (runs.length === 3) return i === 0 ? "Early week" : "Midweek";
+  return "Wednesday";
+}
+
 // ---- Hero (next up) ----
 function renderHero() {
+  const b = active();
   const hero = document.getElementById("hero");
   let next = null;
   outer:
-  for (const w of PLAN) {
+  for (const w of b.plan) {
     for (let i = 0; i < w.runs.length; i++) {
-      if (!doneState[`w${w.week}r${i}`]) { next = { w, r: w.runs[i], i }; break outer; }
+      const v = doneState[rkey(b, w.week, i)];
+      if (!isDone(v) && !isSkipped(v)) { next = { w, r: w.runs[i], i }; break outer; }
     }
   }
   if (!next) {
     hero.className = "hero race-day";
-    hero.innerHTML = `<div class="eyebrow">PLAN COMPLETE</div>
+    hero.innerHTML = `<div class="eyebrow">BLOCK COMPLETE</div>
       <div class="hero-title">Every run done — you smashed it! 🏅</div>`;
     hero.onclick = null;
     return;
   }
-  const day = next.i === 0 ? "Wednesday" : "Sat or Sun";
   const isRace = next.r.type === "race";
   hero.className = "hero" + (isRace ? " race-day" : "");
   hero.innerHTML = `
@@ -642,7 +1013,7 @@ function renderHero() {
       <span class="run-badge ${next.r.type}">${next.r.type}</span>
       <div>
         <div class="hero-title">${next.r.title}</div>
-        <div class="hero-meta">Week ${next.w.week} · ${isRace ? "Sunday" : day}${next.r.sub ? " · " + next.r.sub : ""}</div>
+        <div class="hero-meta">Week ${next.w.week} · ${isRace ? "Weekend" : dayLabel(next.w.runs, next.i)}${next.r.sub ? " · " + next.r.sub : ""}</div>
       </div>
     </div>
     <div class="go-hint">Tap to jump to this week ↓</div>`;
@@ -657,42 +1028,65 @@ function renderHero() {
   };
 }
 
+// ---- Streak: consecutive weeks with 2+ runs done ----
+function computeStreak(b) {
+  const today = Date.now();
+  let streak = 0;
+  for (let idx = b.plan.length - 1; idx >= 0; idx--) {
+    const w = b.plan[idx];
+    const { mon, sun } = weekDates(b, w.week);
+    if (mon.getTime() > today) continue;               // week not started yet
+    const done = w.runs.filter((_, i) => isDone(doneState[rkey(b, w.week, i)])).length;
+    const weekOver = sun.getTime() + MS_DAY <= today;
+    if (done >= 2) { streak++; }
+    else if (weekOver) { break; }                       // finished week below 2 runs: streak ends
+    // current unfinished week with <2 done doesn't break the streak yet
+  }
+  return streak;
+}
+
 // ---- Progress bar ----
 function renderProgress() {
-  let doneRuns = 0, doneKm = 0;
-  PLAN.forEach(w => w.runs.forEach((r, i) => {
-    if (doneState[`w${w.week}r${i}`]) { doneRuns++; doneKm += runKm(r); }
+  const b = active();
+  let doneRuns = 0, doneKm = 0, totalRuns = 0, totalKm = 0;
+  b.plan.forEach(w => w.runs.forEach((r, i) => {
+    totalRuns++; totalKm += runKm(r);
+    if (isDone(doneState[rkey(b, w.week, i)])) { doneRuns++; doneKm += runKm(r); }
   }));
+  const streak = computeStreak(b);
   document.getElementById("progress-label").innerHTML =
-    `<span><strong>${doneRuns}</strong> of ${TOTAL_RUNS} runs</span>` +
-    `<span><strong>${doneKm.toFixed(1)}</strong> of ${TOTAL_KM.toFixed(1)} km</span>`;
-  document.getElementById("progress-fill").style.width = (doneRuns / TOTAL_RUNS * 100).toFixed(1) + "%";
+    `<span><strong>${doneRuns}</strong> of ${totalRuns} runs</span>` +
+    (streak >= 2 ? `<span class="streak">🔥 ${streak}-week streak</span>` : "") +
+    `<span><strong>${doneKm.toFixed(1)}</strong> of ${totalKm.toFixed(1)} km</span>`;
+  document.getElementById("progress-fill").style.width = (doneRuns / totalRuns * 100).toFixed(1) + "%";
 }
 
 // ---- Cumulative distance chart ----
 function renderChart() {
+  const b = active();
   const W = 340, H = 150, padL = 34, padR = 10, padT = 12, padB = 22;
   const plotW = W - padL - padR, plotH = H - padT - padB;
 
   let cum = 0, dcum = 0;
   const planned = [], doneCum = [];
-  PLAN.forEach(w => {
+  b.plan.forEach(w => {
     w.runs.forEach((r, i) => {
       cum += runKm(r);
-      if (doneState[`w${w.week}r${i}`]) dcum += runKm(r);
+      if (isDone(doneState[rkey(b, w.week, i)])) dcum += runKm(r);
     });
     planned.push(cum);
     doneCum.push(dcum);
   });
-  const maxY = cum;
-  const x = i => padL + (i / (PLAN.length - 1)) * plotW;
+  const maxY = cum, N = b.plan.length;
+  const x = i => padL + (i / (N - 1)) * plotW;
   const y = v => padT + plotH - (v / maxY) * plotH;
   const pts = arr => arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
-  const doneArea = `M ${x(0)},${y(0)} L ` + pts(doneCum) + ` L ${x(PLAN.length - 1)},${y(0)} Z`;
+  const doneArea = `M ${x(0)},${y(0)} L ` + pts(doneCum) + ` L ${x(N - 1)},${y(0)} Z`;
   const gridY = [0.25, 0.5, 0.75].map(f =>
     `<line x1="${padL}" y1="${y(maxY * f)}" x2="${W - padR}" y2="${y(maxY * f)}" stroke="#2a313a" stroke-width="1"/>`).join("");
-  const weekLabels = [1, 7, 14].map(n =>
+  const mid = Math.round(N / 2);
+  const weekLabels = [1, mid, N].map(n =>
     `<text x="${x(n - 1)}" y="${H - 6}" fill="#9aa3ad" font-size="9" text-anchor="middle">W${n}</text>`).join("");
 
   document.getElementById("chart").innerHTML = `
@@ -706,87 +1100,122 @@ function renderChart() {
       <text x="${padL - 5}" y="${y(0) + 4}" fill="#9aa3ad" font-size="9" text-anchor="end">0</text>
       ${weekLabels}
     </svg>`;
-  const dKm = doneCum[doneCum.length - 1];
   document.getElementById("chart-sub").innerHTML =
-    `<span style="color:#4caf50">●</span> You: ${dKm.toFixed(1)} km &nbsp; <span style="color:#ff7a18">●</span> Plan: ${Math.round(maxY)} km by race day`;
+    `<span style="color:#4caf50">●</span> You: ${dcum.toFixed(1)} km &nbsp; <span style="color:#ff7a18">●</span> Plan: ${Math.round(maxY)} km`;
 }
 
 // ---- Week cards ----
-const container = document.getElementById("weeks");
-const pastContainer = document.getElementById("past-weeks");
+function renderWeeks() {
+  const b = active();
+  const container = document.getElementById("weeks");
+  const pastContainer = document.getElementById("past-weeks");
+  container.innerHTML = "";
+  pastContainer.innerHTML = "";
+  const nowWeek = currentWeekNum(b);
 
-PLAN.forEach(w => {
-  const { mon, sun } = weekDates(w.week);
-  const card = document.createElement("div");
-  card.dataset.week = w.week;
-  card.className = "week" + (w.week === nowWeek ? " current" : w.week < nowWeek ? " past" : "");
+  b.plan.forEach(w => {
+    const { mon, sun } = weekDates(b, w.week);
+    const dest = w.week < nowWeek ? pastContainer : container;
 
-  card.innerHTML = `
-    <div class="week-head">
-      <h2>Week ${w.week}${w.week === nowWeek ? '<span class="now-chip">THIS WEEK</span>' : ""}${w.note ? `<span class="note-chip">${w.note}</span>` : ""}</h2>
-      <span class="dates">${fmt(mon)} – ${fmt(sun)}</span>
-    </div>`;
-
-  w.runs.forEach((r, i) => {
-    const key = `w${w.week}r${i}`;
-    const row = document.createElement("div");
-    row.className = "run" + (doneState[key] ? " done" : "");
-    row.innerHTML = `
-      <span class="run-badge ${r.type}">${r.type}</span>
-      <div class="run-main">
-        <div class="run-title">${r.title}</div>
-        ${r.sub ? `<div class="run-sub">${r.sub}</div>` : ""}
-      </div>
-      <button class="tick" aria-label="Mark done">✓</button>`;
-    row.querySelector(".tick").addEventListener("click", e => {
-      doneState[key] = !doneState[key];
-      row.classList.toggle("done", !!doneState[key]);
-      localStorage.setItem("b2b-done", JSON.stringify(doneState));
-      if (doneState[key]) {
-        const rect = e.target.getBoundingClientRect();
-        confetti(rect.left + rect.width / 2, rect.top, 26);
-        const weekDone = w.runs.every((_, j) => doneState[`w${w.week}r${j}`]);
-        if (weekDone) {
-          const crect = card.getBoundingClientRect();
-          confetti(crect.left + crect.width / 2, Math.max(crect.top, 60), 60);
-        }
-      }
-      renderHero(); renderProgress(); renderChart();
-    });
-    card.appendChild(row);
-
-    if (r.workout) {
-      const det = document.createElement("details");
-      det.className = "workout";
-      det.innerHTML = `<summary>Workout breakdown</summary>
-        <div class="steps">${r.workout.map(s => `
-          <div class="step">
-            <div class="label ${s.kind}">${s.label}</div>
-            <div>${s.text}</div>
-            ${s.pace ? `<div class="pace">${s.pace}</div>` : ""}
-          </div>`).join("")}
-        </div>`;
-      card.appendChild(det);
+    if (w.phase) {
+      const ph = document.createElement("div");
+      ph.className = "phase-head";
+      ph.innerHTML = `${w.phase.title}<small>${w.phase.sub}</small>`;
+      dest.appendChild(ph);
     }
+
+    const card = document.createElement("div");
+    card.dataset.week = w.week;
+    card.className = "week" + (w.week === nowWeek ? " current" : w.week < nowWeek ? " past" : "");
+    card.innerHTML = `
+      <div class="week-head">
+        <h2>Week ${w.week}${w.week === nowWeek ? '<span class="now-chip">THIS WEEK</span>' : ""}${w.note ? `<span class="note-chip">${w.note}</span>` : ""}</h2>
+        <span class="dates">${fmt(mon)} – ${fmt(sun)}</span>
+      </div>`;
+
+    w.runs.forEach((r, i) => {
+      const key = rkey(b, w.week, i);
+      const row = document.createElement("div");
+      const v = doneState[key];
+      row.className = "run" + (isDone(v) ? " done" : "") + (isSkipped(v) ? " skipped" : "");
+      row.innerHTML = `
+        <span class="run-badge ${r.type}">${r.type}</span>
+        <div class="run-main">
+          <div class="run-title">${r.title}</div>
+          ${r.sub ? `<div class="run-sub">${r.sub}</div>` : ""}
+        </div>
+        <button class="skipbtn" aria-label="Skip this run">✕</button>
+        <button class="tick" aria-label="Mark done">✓</button>`;
+
+      row.querySelector(".tick").addEventListener("click", e => {
+        const was = doneState[key];
+        doneState[key] = isDone(was) ? undefined : true;
+        if (doneState[key] === undefined) delete doneState[key];
+        row.classList.toggle("done", isDone(doneState[key]));
+        row.classList.remove("skipped");
+        saveState();
+        if (isDone(doneState[key])) {
+          const rect = e.target.getBoundingClientRect();
+          confetti(rect.left + rect.width / 2, rect.top, 26);
+          const weekAllDone = w.runs.every((_, j) => isDone(doneState[rkey(b, w.week, j)]));
+          if (weekAllDone) {
+            const crect = card.getBoundingClientRect();
+            confetti(crect.left + crect.width / 2, Math.max(crect.top, 60), 60);
+          }
+        }
+        renderHero(); renderProgress(); renderChart();
+      });
+
+      row.querySelector(".skipbtn").addEventListener("click", () => {
+        doneState[key] = isSkipped(doneState[key]) ? undefined : "skip";
+        if (doneState[key] === undefined) delete doneState[key];
+        row.classList.toggle("skipped", isSkipped(doneState[key]));
+        row.classList.remove("done");
+        saveState();
+        renderHero(); renderProgress(); renderChart();
+      });
+
+      card.appendChild(row);
+
+      if (r.workout) {
+        const det = document.createElement("details");
+        det.className = "workout";
+        det.innerHTML = `<summary>Workout breakdown</summary>
+          <div class="steps">${r.workout.map(s => `
+            <div class="step">
+              <div class="label ${s.kind}">${s.label}</div>
+              <div>${s.text}</div>
+              ${s.pace ? `<div class="pace">${s.pace}</div>` : ""}
+            </div>`).join("")}
+          </div>`;
+        card.appendChild(det);
+      }
+    });
+
+    dest.appendChild(card);
   });
 
-  (w.week < nowWeek ? pastContainer : container).appendChild(card);
-});
+  const pastToggle = document.getElementById("past-toggle");
+  const pastCount = pastContainer.querySelectorAll(".week").length;
+  pastContainer.classList.add("collapsed");
+  if (pastCount > 0) {
+    pastToggle.hidden = false;
+    pastToggle.textContent = `▸ Show ${pastCount} past week${pastCount === 1 ? "" : "s"}`;
+  } else {
+    pastToggle.hidden = true;
+  }
+}
 
-// ---- Past weeks toggle ----
-const pastToggle = document.getElementById("past-toggle");
-const pastCount = pastContainer.children.length;
 function togglePast() {
+  const pastContainer = document.getElementById("past-weeks");
+  const pastToggle = document.getElementById("past-toggle");
+  const pastCount = pastContainer.querySelectorAll(".week").length;
   const collapsed = pastContainer.classList.toggle("collapsed");
   pastToggle.textContent = collapsed
     ? `▸ Show ${pastCount} past week${pastCount === 1 ? "" : "s"}`
     : "▾ Hide past weeks";
 }
-if (pastCount > 0) {
-  pastToggle.hidden = false;
-  pastToggle.textContent = `▸ Show ${pastCount} past week${pastCount === 1 ? "" : "s"}`;
-  pastToggle.addEventListener("click", togglePast);
-}
+document.getElementById("past-toggle").addEventListener("click", togglePast);
 
 // ---- View switching (Home / Plan) ----
 function setView(view) {
@@ -798,9 +1227,15 @@ function setView(view) {
 document.getElementById("tab-home").addEventListener("click", () => setView("home"));
 document.getElementById("tab-plan").addEventListener("click", () => setView("plan"));
 
-renderHero();
-renderProgress();
-renderChart();
+function renderAll() {
+  renderHeader();
+  renderPills();
+  renderHero();
+  renderProgress();
+  renderChart();
+  renderWeeks();
+}
+renderAll();
 </script>
 </body>
 </html>

@@ -622,239 +622,202 @@ const STRIDES = [
   { label: "Cool down", kind: "work", text: "1 km easy" },
 ];
 
-const BASE_PLAN = [
+const MAINTAIN_PLAN = [
   {
     week: 1,
-    phase: { title: "Phase 1 · Re-entry", sub: "Find the rhythm again. No paces, no pressure — 2 runs a week, all conversational." },
     runs: [
-      { type: "easy", title: "4 km easy" },
-      { type: "long", title: "6 km long run", sub: "~50 min at your 8:15/km" },
+      { type: "easy", title: "7 km easy run", sub: "Conversational · 50–60 min" },
+      {
+        type: "long",
+        title: "10 km Progressive Long Run",
+        sub: "1h10–1h20",
+        workout: [
+          { label: "Session", kind: "work", text: "3 km at a conversational pace" },
+          { label: "Session", kind: "work", text: "2 km at 7:20/km" },
+          { label: "Session", kind: "work", text: "2 km at 7:10/km" },
+          { label: "Session", kind: "work", text: "2 km at 6:50/km" },
+          { label: "Session", kind: "work", text: "1 km at a conversational pace" },
+        ],
+      },
     ],
   },
   {
     week: 2,
     runs: [
-      { type: "easy", title: "4.5 km easy" },
-      { type: "long", title: "7 km long run", sub: "~58 min at your 8:15/km" },
+      {
+        type: "intervals",
+        title: "6 km intervals — 1km Repeats",
+        sub: "45–50 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km at a conversational pace", pace: "No faster than 7:35/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Repeat ×3", kind: "repeat", text: "1 km at 6:35/km", pace: "6:20–6:50/km, then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.5 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "11 km long run", sub: "Conversational · 1h20–1h30" },
     ],
   },
   {
     week: 3,
     runs: [
-      { type: "easy", title: "3 km easy jog", sub: "Optional — skip guilt-free, this is the new 3rd run trying itself on" },
-      { type: "easy", title: "5 km easy" },
-      { type: "long", title: "7.5 km long run", sub: "~62 min at your 8:15/km" },
+      { type: "easy", title: "5 km easy run", sub: "Conversational · 35–40 min" },
+      {
+        type: "long",
+        title: "12 km Hotspot Long Run",
+        sub: "1h20–1h40",
+        workout: [
+          { label: "Session", kind: "work", text: "6 km at a conversational pace" },
+          { label: "Hotspot", kind: "work", text: "1 km at 6:45/km" },
+          { label: "Session", kind: "work", text: "5 km at a conversational pace" },
+        ],
+      },
     ],
   },
   {
     week: 4,
     runs: [
-      { type: "easy", title: "3.5 km easy jog", sub: "Optional — but by now it might just feel normal" },
-      { type: "easy", title: "5 km easy" },
-      { type: "long", title: "8 km long run", sub: "~66 min at your 8:15/km" },
+      {
+        type: "tempo",
+        title: "6.5 km tempo — Rolling 300s",
+        sub: "45–50 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "2 km at a conversational pace", pace: "No faster than 7:35/km" },
+          { label: "Repeat ×5", kind: "repeat", text: "300 m at 6:30/km + 300 m at 7:15/km", pace: "No rest between — roll straight through" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.5 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      {
+        type: "long",
+        title: "10 km Progressive Long Run",
+        sub: "1h0–1h20",
+        workout: [
+          { label: "Session", kind: "work", text: "3 km at a conversational pace" },
+          { label: "Session", kind: "work", text: "3 km at 7:05/km" },
+          { label: "Session", kind: "work", text: "3 km at 6:45/km" },
+          { label: "Session", kind: "work", text: "1 km at a conversational pace" },
+        ],
+      },
     ],
   },
   {
     week: 5,
-    phase: { title: "Phase 2 · Engine room", sub: "3 runs a week settles in: one easy, one fun & fast, one long. Deloads every 4th week." },
+    note: "Deload",
     runs: [
-      { type: "easy", title: "5 km easy" },
-      { type: "quality", title: "5 km — Easy + Strides", workout: STRIDES },
-      { type: "long", title: "8.5 km long run", sub: "~70 min at your 8:15/km" },
+      {
+        type: "trial",
+        title: "6 km — 5km Time Trial",
+        sub: "40–45 min all up",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1 km at a conversational pace", pace: "No faster than 7:35/km" },
+          { label: "Rest", kind: "rest", text: "120s walking rest" },
+          { label: "Time trial", kind: "work", text: "5 km at 6:40/km", pace: "Push yourself — all-out effort" },
+        ],
+      },
+      { type: "long", title: "7.5 km long run", sub: "Conversational · 55–60 min" },
     ],
   },
   {
     week: 6,
     runs: [
-      { type: "easy", title: "5.5 km easy" },
       {
-        type: "quality",
-        title: "5.5 km — Fartlek",
+        type: "tempo",
+        title: "7 km tempo — Progressive Run",
+        sub: "45–50 min",
         workout: [
-          { label: "Warm up", kind: "work", text: "10 min easy" },
-          { label: "Repeat ×8", kind: "repeat", text: "1 min brisk (around 10k effort)", pace: "2 min easy jog between" },
-          { label: "Cool down", kind: "work", text: "5 min easy" },
+          { label: "Warm up", kind: "work", text: "1 km at a conversational pace", pace: "No faster than 7:30/km" },
+          { label: "Session", kind: "work", text: "1 km at 7:15/km" },
+          { label: "Session", kind: "work", text: "2 km at 6:55/km" },
+          { label: "Session", kind: "work", text: "1 km at 6:45/km" },
+          { label: "Session", kind: "work", text: "1 km at 6:35/km", pace: "then 90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1 km at a conversational pace", pace: "or slower!" },
         ],
       },
-      { type: "long", title: "9 km long run", sub: "~74 min at your 8:15/km" },
+      { type: "long", title: "10 km long run", sub: "Conversational · 1h10–1h20" },
     ],
   },
   {
     week: 7,
     runs: [
-      { type: "easy", title: "6 km easy" },
+      { type: "easy", title: "5 km easy run", sub: "Conversational · 35–40 min" },
       {
-        type: "quality",
-        title: "5.5 km — Hill Repeats",
+        type: "long",
+        title: "12 km Progressive Long Run",
+        sub: "1h20–1h30",
         workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Repeat ×6", kind: "repeat", text: "45s uphill, strong effort", pace: "Walk back down to recover" },
-          { label: "Cool down", kind: "work", text: "1.5 km easy" },
+          { label: "Session", kind: "work", text: "3 km at a conversational pace" },
+          { label: "Session", kind: "work", text: "3 km at 7:15/km" },
+          { label: "Session", kind: "work", text: "3 km at 7:05/km" },
+          { label: "Session", kind: "work", text: "2 km at 6:45/km" },
+          { label: "Session", kind: "work", text: "1 km at a conversational pace" },
         ],
       },
-      { type: "long", title: "9.5 km long run", sub: "~78 min at your 8:15/km · hills if you fancy" },
     ],
   },
   {
     week: 8,
-    note: "Deload",
     runs: [
-      { type: "easy", title: "4 km easy" },
-      { type: "long", title: "7 km long run", sub: "~58 min — enjoy the short one" },
+      {
+        type: "intervals",
+        title: "6 km intervals — Fast 8-4-2s",
+        sub: "50–55 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.6 km at a conversational pace", pace: "No faster than 7:30/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Session", kind: "work", text: "800 m at 6:15/km", pace: "then 90s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "400 m at 6:05/km", pace: "then 90s walking rest" },
+          { label: "Rest", kind: "rest", text: "60s walking rest" },
+          { label: "Repeat ×4", kind: "repeat", text: "200 m at 5:50/km", pace: "then 40s walking rest" },
+          { label: "Rest", kind: "rest", text: "40s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.2 km at a conversational pace" },
+        ],
+      },
+      { type: "long", title: "11 km long run", sub: "Conversational · 1h20–1h30" },
     ],
   },
   {
     week: 9,
-    note: "Pretend race!",
     runs: [
-      { type: "easy", title: "4 km easy" },
-      { type: "quality", title: "4 km — Easy + 4 strides", sub: "Light legs-primer before the weekend", workout: [
-        { label: "Warm up", kind: "work", text: "3 km easy, conversational" },
-        { label: "Repeat ×4", kind: "repeat", text: "20s stride — fast but relaxed", pace: "60s walk between" },
-        { label: "Cool down", kind: "work", text: "600 m easy" },
-      ] },
-      { type: "race", title: "10 km Pretend Race 🎖", sub: "All-out solo effort — pick a flat route, race yourself, beat your B2B time" },
+      {
+        type: "tempo",
+        title: "7 km tempo — On Off Ks",
+        sub: "45–55 min",
+        workout: [
+          { label: "Warm up", kind: "work", text: "1.5 km at a conversational pace", pace: "No faster than 7:25/km" },
+          { label: "Repeat ×2", kind: "repeat", text: "1 km at 7:05/km + 1 km at 6:30/km", pace: "No rest between — roll straight through" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.5 km at a conversational pace", pace: "or slower!" },
+        ],
+      },
+      { type: "long", title: "10 km long run", sub: "Conversational · 1h10–1h20" },
     ],
   },
   {
     week: 10,
-    runs: [
-      { type: "easy", title: "6 km easy" },
-      {
-        type: "quality",
-        title: "5 km — Rolling 400s",
-        workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Repeat ×3", kind: "repeat", text: "400 m brisk + 400 m float", pace: "No rest between — roll straight through" },
-          { label: "Rest", kind: "rest", text: "90s walking rest" },
-          { label: "Cool down", kind: "work", text: "1 km easy" },
-        ],
-      },
-      { type: "long", title: "10 km long run", sub: "~83 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 11,
-    runs: [
-      { type: "easy", title: "6 km easy" },
-      {
-        type: "quality",
-        title: "5.5 km — Fartlek",
-        workout: [
-          { label: "Warm up", kind: "work", text: "10 min easy" },
-          { label: "Repeat ×8", kind: "repeat", text: "1 min brisk (around 10k effort)", pace: "2 min easy jog between" },
-          { label: "Cool down", kind: "work", text: "5 min easy" },
-        ],
-      },
-      { type: "long", title: "10.5 km long run", sub: "~87 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 12,
-    note: "Christmas deload",
-    runs: [
-      { type: "easy", title: "4.5 km easy", sub: "Whenever it fits around the festivities" },
-      { type: "long", title: "7.5 km long run", sub: "~62 min · two runs this week is a win 🎄" },
-    ],
-  },
-  {
-    week: 13,
-    phase: { title: "Phase 3 · Ramp", sub: "Tempo work returns and the long run consolidates. Ends with 13 km in the legs — ready for HM training." },
-    runs: [
-      { type: "easy", title: "6 km easy" },
-      {
-        type: "tempo",
-        title: "6 km — Tempo 20 min",
-        workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Tempo", kind: "work", text: "20 min comfortably hard", pace: "Around 7:15–7:30/km — adjust off your pretend-race result" },
-          { label: "Cool down", kind: "work", text: "1 km easy" },
-        ],
-      },
-      { type: "long", title: "10 km long run", sub: "~83 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 14,
-    runs: [
-      { type: "easy", title: "6.5 km easy" },
-      {
-        type: "quality",
-        title: "5.5 km — Hill Repeats",
-        workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Repeat ×6", kind: "repeat", text: "45s uphill, strong effort", pace: "Walk back down to recover" },
-          { label: "Cool down", kind: "work", text: "1.5 km easy" },
-        ],
-      },
-      { type: "long", title: "11 km long run", sub: "~91 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 15,
-    runs: [
-      { type: "easy", title: "6.5 km easy" },
-      {
-        type: "tempo",
-        title: "6.5 km — Tempo 25 min",
-        workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Tempo", kind: "work", text: "25 min comfortably hard", pace: "Around 7:15–7:30/km" },
-          { label: "Cool down", kind: "work", text: "1 km easy" },
-        ],
-      },
-      { type: "long", title: "11.5 km long run", sub: "~95 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 16,
-    note: "Deload",
-    runs: [
-      { type: "easy", title: "5 km easy" },
-      { type: "long", title: "8 km long run", sub: "~66 min — soak it up" },
-    ],
-  },
-  {
-    week: 17,
-    runs: [
-      { type: "easy", title: "7 km easy" },
-      {
-        type: "tempo",
-        title: "7 km — Tempo 2×15 min",
-        workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Tempo", kind: "work", text: "15 min comfortably hard" },
-          { label: "Rest", kind: "rest", text: "3 min walk" },
-          { label: "Tempo", kind: "work", text: "15 min comfortably hard" },
-          { label: "Cool down", kind: "work", text: "1 km easy" },
-        ],
-      },
-      { type: "long", title: "12 km long run", sub: "~99 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 18,
-    runs: [
-      { type: "easy", title: "7 km easy" },
-      { type: "quality", title: "5 km — Easy + Strides", workout: STRIDES },
-      { type: "long", title: "12.5 km long run", sub: "~103 min at your 8:15/km" },
-    ],
-  },
-  {
-    week: 19,
     note: "Final week!",
     runs: [
-      { type: "easy", title: "6 km easy" },
       {
-        type: "tempo",
-        title: "7 km — Tempo 30 min",
+        type: "intervals",
+        title: "7 km intervals — 400m Repeats",
+        sub: "55–60 min",
         workout: [
-          { label: "Warm up", kind: "work", text: "1.5 km easy" },
-          { label: "Tempo", kind: "work", text: "30 min comfortably hard", pace: "Around 7:15–7:30/km" },
-          { label: "Cool down", kind: "work", text: "1 km easy" },
+          { label: "Warm up", kind: "work", text: "2 km at a conversational pace", pace: "No faster than 7:25/km" },
+          { label: "Rest", kind: "rest", text: "90s walking rest" },
+          { label: "Repeat ×8", kind: "repeat", text: "400 m at 5:55/km", pace: "5:45–6:05/km, then 60s walking rest" },
+          { label: "Cool down", kind: "work", text: "1.8 km at a conversational pace", pace: "or slower!" },
         ],
       },
-      { type: "long", title: "13 km long run", sub: "~107 min · your longest ever — then HM training begins 💪" },
+      {
+        type: "long",
+        title: "10 km Hotspot Long Run",
+        sub: "1h10–1h20",
+        workout: [
+          { label: "Session", kind: "work", text: "5 km at a conversational pace" },
+          { label: "Hotspot", kind: "work", text: "1 km at 6:35/km" },
+          { label: "Session", kind: "work", text: "4 km at a conversational pace" },
+        ],
+      },
     ],
   },
 ];
@@ -874,17 +837,17 @@ const BLOCKS = [
     plan: B2B_PLAN,
   },
   {
-    id: "base",
-    label: "Base Block",
-    header: "🏗 Base Block → Half Marathon",
+    id: "maintain",
+    label: "Maintain",
+    header: "🏃‍♀️ Run to Maintain",
     week1: "2026-10-05",
     target: "2027-02-15",
     targetLabel: "until HM training begins — Mon 15 Feb",
-    dayZeroText: "Base block done — HM training starts today! 🏗",
-    afterText: "Base block complete — on to the half marathon build! 🏗",
-    placeholder: "19 weeks of base, then the half marathon build begins (race: Sun 6 June 2027) 🏅",
-    keyPrefix: "B2:",
-    plan: BASE_PLAN,
+    dayZeroText: "Maintenance done — HM training starts today! 🏗",
+    afterText: "Maintenance plan complete — on to the half marathon build! 🏗",
+    placeholder: "Gianni's Runna maintenance plan · 10 weeks · 166 km · ends Sun 13 Dec — then the HM build (race: Sun 6 June 2027) 🏅",
+    keyPrefix: "M:",
+    plan: MAINTAIN_PLAN,
   },
 ];
 // =====================================================

@@ -364,6 +364,16 @@
     font-size: 0.75rem;
     margin-top: 26px;
   }
+  .backup-row { margin-top: 10px; }
+  .backup-row button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+  }
 
   /* ---- Confetti ---- */
   .confetti {
@@ -407,7 +417,11 @@
 <div id="weeks"></div>
 
 <div class="placeholder" id="placeholder"></div>
-<footer>Tap ✓ when a run's done · tap ✕ to skip it guilt-free</footer>
+<footer>Tap ✓ when a run's done · tap ✕ to skip it guilt-free
+  <div class="backup-row">
+    <button id="backup-btn">Back up progress</button> · <button id="restore-btn">Restore</button>
+  </div>
+</footer>
 
 <nav class="tabbar">
   <button id="tab-home" class="active">🏠 Home</button>
@@ -1189,6 +1203,34 @@ function setView(view) {
 }
 document.getElementById("tab-home").addEventListener("click", () => setView("home"));
 document.getElementById("tab-plan").addEventListener("click", () => setView("plan"));
+
+// ---- Backup / restore (home-screen web apps lose storage when deleted) ----
+document.getElementById("backup-btn").addEventListener("click", async () => {
+  const data = JSON.stringify({ done: doneState, block: localStorage.getItem("b2b-block") });
+  try {
+    await navigator.clipboard.writeText(data);
+    alert("Backup copied to your clipboard ✓\n\nPaste it into Notes to keep it safe, or straight into Restore on a fresh copy of the app.");
+  } catch (e) {
+    prompt("Copy this backup code (select all → copy):", data);
+  }
+});
+document.getElementById("restore-btn").addEventListener("click", () => {
+  const raw = prompt("Paste your backup code:");
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    Object.assign(doneState, data.done || data);
+    saveState();
+    if (data.block && BLOCKS.some(b => b.id === data.block)) {
+      activeId = data.block;
+      localStorage.setItem("b2b-block", activeId);
+    }
+    renderAll();
+    alert("Progress restored ✓");
+  } catch (e) {
+    alert("That code didn't parse — make sure you copied the whole thing, curly braces and all.");
+  }
+});
 
 function renderAll() {
   renderHeader();
